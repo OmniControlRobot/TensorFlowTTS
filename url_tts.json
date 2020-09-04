@@ -1,5 +1,5 @@
 {
-  "eng": "https://master-tensor-flow-tts-en-psi1104.endpoint.ainize.ai/predict",
-  "kor": "https://master-tensor-flow-tts-kr-psi1104.endpoint.ainize.ai/predict",
-  "chinese": "https://master-tensor-flow-tts-chinese-psi1104.endpoint.ainize.ai/predict"
+  "english": "https://tts-english-tensor-flow-tts-psi1104.endpoint.ainize.ai/predict",
+  "korean": "https://tts-korean-tensor-flow-tts-psi1104.endpoint.ainize.ai/predict",
+  "chinese": "https://tts-chinese-tensor-flow-tts-psi1104.endpoint.ainize.ai/predict"
 }
