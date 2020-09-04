@@ -19,6 +19,7 @@ from tensorflow_tts.inference import AutoProcessor
 from scipy.io import wavfile
 
 import nltk
+nltk.download('averaged_perceptron_tagger')
 nltk.download('punkt')
 
 DATA_FOLDER = 'data'
@@ -30,62 +31,38 @@ requests_queue = Queue()
 BATCH_SIZE = 1
 CHECK_INTERVAL = 0.1
 ########################################################################################
-processor = AutoProcessor.from_pretrained(pretrained_path="mapper/ljspeech_mapper.json")
+processor = AutoProcessor.from_pretrained(pretrained_path="mapper/baker_mapper.json")
 
-tacotron2_config = AutoConfig.from_pretrained('conf/tacotron2.v1.yaml')
+tacotron2_config = AutoConfig.from_pretrained('conf/tacotron2.baker.v1.yaml')
 tacotron2 = TFAutoModel.from_pretrained(
     config=tacotron2_config,
-    pretrained_path="model/tacotron2-120k.h5",
+    pretrained_path="model/tacotron2-100k.h5",
     training=False, 
     name="tacotron2"
 )
 
-fastspeech_config = AutoConfig.from_pretrained('conf/fastspeech.v1.yaml')
-fastspeech = TFAutoModel.from_pretrained(
-    config=fastspeech_config,
-    pretrained_path="model/fastspeech-150k.h5",
-    name="fastspeech"
-)
-
-fastspeech2_config = AutoConfig.from_pretrained('conf/fastspeech2.v1.yaml')
+fastspeech2_config = AutoConfig.from_pretrained('conf/fastspeech2.baker.v2.yaml')
 fastspeech2 = TFAutoModel.from_pretrained(
     config=fastspeech2_config,
-    pretrained_path="model/fastspeech2-150k.h5",
+    pretrained_path="model/fastspeech2-200k.h5",
     name="fastspeech2"
 )
 
-melgan_config = AutoConfig.from_pretrained('conf/melgan.v1.yaml')
-melgan = TFAutoModel.from_pretrained(
-    config=melgan_config,
-    pretrained_path="model/melgan-1M6.h5",
-    name="melgan"
-)
-
-melgan_stft_config = AutoConfig.from_pretrained('conf/melgan.stft.v1.yaml')
-melgan_stft = TFAutoModel.from_pretrained(
-    config=melgan_stft_config,
-    pretrained_path="model/melgan.stft-2M.h5",
-    name="melgan_stft"
-)
-
-mb_melgan_config = AutoConfig.from_pretrained('conf/multiband_melgan.v1.yaml')
+mb_melgan_config = AutoConfig.from_pretrained('conf/multiband_melgan.baker.v1.yaml')
 mb_melgan = TFAutoModel.from_pretrained(
     config=mb_melgan_config,
-    pretrained_path="model/mb.melgan-940k.h5",
+    pretrained_path="model/mb.melgan-920k.h5",
     name="mb_melgan"
 )
 
 model_name = {
     "TACOTRON": tacotron2,
-    "FASTSPEECH": fastspeech,
     "FASTSPEECH2": fastspeech2,
-    "MELGAN": melgan,
-    "MELGAN-STFT": melgan_stft,
     "MB-MELGAN": mb_melgan
 }
 ########################################################################################
 def do_synthesis(input_text, text2mel_model, vocoder_model, text2mel_name, vocoder_name):
-    input_ids = processor.text_to_sequence(input_text)
+    input_ids = processor.text_to_sequence(input_text, inference=True)
 
     # text2mel part
     if text2mel_name == "TACOTRON":
@@ -93,13 +70,7 @@ def do_synthesis(input_text, text2mel_model, vocoder_model, text2mel_name, vocod
             tf.expand_dims(tf.convert_to_tensor(input_ids, dtype=tf.int32), 0),
             tf.convert_to_tensor([len(input_ids)], tf.int32),
             tf.convert_to_tensor([0], dtype=tf.int32)
-    )
-    elif text2mel_name == "FASTSPEECH":
-        mel_before, mel_outputs, duration_outputs = text2mel_model.inference(
-            input_ids=tf.expand_dims(tf.convert_to_tensor(input_ids, dtype=tf.int32), 0),
-            speaker_ids=tf.convert_to_tensor([0], dtype=tf.int32),
-            speed_ratios=tf.convert_to_tensor([1.0], dtype=tf.float32),
-    )
+        )
     elif text2mel_name == "FASTSPEECH2":
         mel_before, mel_outputs, duration_outputs, _, _ = text2mel_model.inference(
             tf.expand_dims(tf.convert_to_tensor(input_ids, dtype=tf.int32), 0),
@@ -107,17 +78,20 @@ def do_synthesis(input_text, text2mel_model, vocoder_model, text2mel_name, vocod
             speed_ratios=tf.convert_to_tensor([1.0], dtype=tf.float32),
             f0_ratios=tf.convert_to_tensor([1.0], dtype=tf.float32),
             energy_ratios=tf.convert_to_tensor([1.0], dtype=tf.float32),
-    )
+        )
     else:
-        raise ValueError("Only TACOTRON, FASTSPEECH, FASTSPEECH2 are supported on text2mel_name")
+        raise ValueError("Only TACOTRON, FASTSPEECH2 are supported on text2mel_name")
 
     # vocoder part
-    if vocoder_name == "MELGAN" or vocoder_name == "MELGAN-STFT":
-        audio = vocoder_model(mel_outputs)[0, :, 0]
-    elif vocoder_name == "MB-MELGAN":
-        audio = vocoder_model(mel_outputs)[0, :, 0]
+    if vocoder_name == "MB-MELGAN":
+        # tacotron-2 generate noise in the end symtematic, let remove it :v.
+        if text2mel_name == "TACOTRON":
+            remove_end = 1024
+        else:
+            remove_end = 1
+        audio = vocoder_model.inference(mel_outputs)[0, :-remove_end, 0]
     else:
-        raise ValueError("Only MELGAN, MELGAN-STFT and MB_MELGAN are supported on vocoder_name")
+        raise ValueError("Only MB_MELGAN are supported on vocoder_name")
 
     return audio.numpy()
 
@@ -189,10 +163,10 @@ def predict():
         vocoder = request.form["vocoder"]
 
         if feature_generator not in model_name:
-            return jsonify({'message': "Only TACOTRON, FASTSPEECH, FASTSPEECH2 are supported on text2mel_name"}), 400
+            return jsonify({'message': "Only TACOTRON, FASTSPEECH2 are supported on feature_generator"}), 400
 
         if vocoder not in model_name:
-            return jsonify({'message': 'Only MELGAN, MELGAN-STFT and MB_MELGAN are supported on vocoder_name'}), 400
+            return jsonify({'message': 'Only MB_MELGAN are supported on vocoder'}), 400
 
         if requests_queue.qsize() >= 1:
             return jsonify({'message': 'Too Many Requests'}), 429
@@ -206,17 +180,16 @@ def predict():
         while 'output' not in req:
             time.sleep(CHECK_INTERVAL)
 
-        result = req['output']
-        print(type(result))
-
         if req['output'] == 400:
-            return jsonify({'error': 'Generate TTS error! check your input data'}), 400
+            return jsonify({'error': 'Generate TTS error! input text is too long'}), 400
+
+        result = req['output']
 
         return send_file(result, mimetype="audio/wav")
 
     except Exception as e:
         print(e)
-        return "server error", 500
+        return "server error", 400
 
 @app.route('/health')
 def health():
@@ -225,7 +198,7 @@ def health():
 
 @app.route('/')
 def main():
-    return "TensorFlowTTS-en"
+    return "TensorFlowTTS-Chinese"
 
 
 if __name__ == "__main__":
