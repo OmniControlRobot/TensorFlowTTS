@@ -12,9 +12,15 @@ RUN python3.7 -m pip install -r requirements.txt
 
 RUN mkdir ./model
 
-RUN gdown --id "1c8xG8cysHslJRlgB5CYbUnWngEydIfI7" -O model/tacotron2-100k.h5
-RUN gdown --id "1adb_hA9q0Qg959bl70WiRpm5a9Hdc2Ym" -O model/fastspeech2-200k.h5
-RUN gdown --id "1tmmUjKIFekzlQi0-BmEcrib_QP2QbChY" -O model/mb.melgan-1000k.h5
+RUN gdown --id "12jvEO1VqFo1ocrgY9GUHF_kVcLn3QaGW" -O model/tacotron2-120k.h5
+RUN gdown --id "1T5GOE_M27zJlCAjnanpOS9HBPUcdE9sB" -O model/fastspeech-150k.h5
+RUN gdown --id "1EhMD20uAFlKsii1lMnlkrsenVTFKM0ld" -O model/fastspeech2-150k.h5
+
+RUN gdown --id "1A3zJwzlXEpu_jHeatlMdyPGjn1V7-9iG" -O model/melgan-1M6.h5
+RUN gdown --id "1WB5iQbk9qB-Y-wO8BU6S2TnRiu4VU5ys" -O model/melgan.stft-2M.h5
+RUN gdown --id "1kChFaLI7slrTtuk3pvcOiJwJDCygsw9C" -O model/mb.melgan-940k.h5
+
+RUN mkdir ./data
 
 COPY . .
 
