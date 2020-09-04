@@ -1,0 +1,5 @@
+{
+  "eng": "https://master-tensor-flow-tts-en-psi1104.endpoint.ainize.ai/predict",
+  "kor": "https://master-tensor-flow-tts-kr-psi1104.endpoint.ainize.ai/predict",
+  "chinese": "https://master-tensor-flow-tts-chinese-psi1104.endpoint.ainize.ai/predict"
+}
