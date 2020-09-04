@@ -1,69 +1,190 @@
-import requests
+import os
 import io
-import json
+import uuid
+import shutil
 
-from flask import Flask, request, jsonify, send_file, render_template
+import threading
+import time
+from queue import Empty, Queue
+
+import tensorflow as tf
+import numpy as np
+
+from flask import Flask, flash, request, jsonify, send_file
 from flask_cors import CORS
 
+from tensorflow_tts.inference import TFAutoModel
+from tensorflow_tts.inference import AutoConfig
+from tensorflow_tts.inference import AutoProcessor
+
+from scipy.io import wavfile
+
+import nltk
+nltk.download('punkt')
+
+DATA_FOLDER = 'data'
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
+
+requests_queue = Queue()
+BATCH_SIZE = 1
+CHECK_INTERVAL = 0.1
 ########################################################################################
-URL_PATH = 'url_tts.json'
+processor = AutoProcessor.from_pretrained(pretrained_path="mapper/kss_mapper.json")
 
-with open(URL_PATH) as f:
-    url_dict = json.load(f)
+tacotron2_config = AutoConfig.from_pretrained('conf/tacotron2.kss.v1.yaml')
+tacotron2 = TFAutoModel.from_pretrained(
+    config=tacotron2_config,
+    pretrained_path="model/tacotron2-100k.h5",
+    training=False,
+    name="tacotron2"
+)
+
+fastspeech2_config = AutoConfig.from_pretrained('conf/fastspeech2.kss.v1.yaml')
+fastspeech2 = TFAutoModel.from_pretrained(
+    config=fastspeech2_config,
+    pretrained_path="model/fastspeech2-200k.h5",
+    name="fastspeech2"
+)
+
+mb_melgan_config = AutoConfig.from_pretrained('conf/multiband_melgan.v1.yaml')
+mb_melgan = TFAutoModel.from_pretrained(
+    config=mb_melgan_config,
+    pretrained_path="model/mb.melgan-1000k.h5",
+    name="mb_melgan"
+)
+
+model_name = {
+    "TACOTRON": tacotron2,
+    "FASTSPEECH2": fastspeech2,
+    "MB-MELGAN": mb_melgan
+}
 ########################################################################################
+def do_synthesis(input_text, text2mel_model, vocoder_model, text2mel_name, vocoder_name):
+    input_ids = processor.text_to_sequence(input_text)
 
+    # text2mel part
+    if text2mel_name == "TACOTRON":
+        _, mel_outputs, stop_token_prediction, alignment_history = text2mel_model.inference(
+            tf.expand_dims(tf.convert_to_tensor(input_ids, dtype=tf.int32), 0),
+            tf.convert_to_tensor([len(input_ids)], tf.int32),
+            tf.convert_to_tensor([0], dtype=tf.int32)
+        )
+    elif text2mel_name == "FASTSPEECH2":
+        mel_before, mel_outputs, duration_outputs, _, _ = text2mel_model.inference(
+            tf.expand_dims(tf.convert_to_tensor(input_ids, dtype=tf.int32), 0),
+            speaker_ids=tf.convert_to_tensor([0], dtype=tf.int32),
+            speed_ratios=tf.convert_to_tensor([1.0], dtype=tf.float32),
+            f0_ratios=tf.convert_to_tensor([1.0], dtype=tf.float32),
+            energy_ratios=tf.convert_to_tensor([1.0], dtype=tf.float32),
+        )
+    else:
+        raise ValueError("Only TACOTRON, FASTSPEECH2 are supported on text2mel_name")
 
-def run(language, input_text, feature_generator, vocoder):
+    # vocoder part
+    if vocoder_name == "MB-MELGAN":
+        audio = vocoder_model.inference(mel_outputs)[0, :, 0]
+    else:
+        raise ValueError("Only MB_MELGAN are supported on vocoder_name")
+
+    return audio.numpy()
+
+def run(input_text, feature_generator, vocoder):
     try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        payload = {'input_text': input_text, 'feature_generator': feature_generator, 'vocoder': vocoder}
+        audios = do_synthesis(input_text, model_name[feature_generator], model_name[vocoder], feature_generator, vocoder)
 
-        url = url_dict[language]
+        f_id = str(uuid.uuid4())
 
-        session = requests.Session()
-        response = session.post(url, headers=headers, data=payload)
+        os.makedirs(os.path.join(DATA_FOLDER, f_id), exist_ok=True)
 
-        return response
+        f_path = os.path.join(DATA_FOLDER, f_id, "result.wav")
+
+        wavfile.write(f_path, 22050, audios)
+
+        with open(f_path, 'rb') as wav:
+            wav_bytes = wav.read()
+
+        wav_io = io.BytesIO(wav_bytes)
+        wav_io.seek(0)
+
+        shutil.rmtree(os.path.join(DATA_FOLDER, f_id))
+
+        return wav_io
 
     except Exception as e:
         print(e)
-        return 500
-########################################################################################
+        return 400
 
+def handle_requests_by_batch():
+    try:
+        while True:
+            requests_batch = []
 
-app = Flask(__name__, template_folder='templates')
+            while not (
+              len(requests_batch) >= BATCH_SIZE # or
+              #(len(requests_batch) > 0 #and time.time() - requests_batch[0]['time'] > BATCH_TIMEOUT)
+            ):
+              try:
+                requests_batch.append(requests_queue.get(timeout=CHECK_INTERVAL))
+              except Empty:
+                continue
+
+            batch_outputs = []
+
+            for request in requests_batch:
+                batch_outputs.append(run(request['input'][0], request['input'][1], request['input'][2]))
+
+            for request, output in zip(requests_batch, batch_outputs):
+                request['output'] = output
+
+    except Exception as e:
+        while not requests_queue.empty():
+            requests_queue.get()
+        print(e)
+
+threading.Thread(target=handle_requests_by_batch).start()
+#######################################################################################
+app = Flask(__name__)
 cors = CORS(app)
-
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        language = request.form["language"]
+        print(requests_queue.qsize())
+
         input_text = request.form["input_text"]
         feature_generator = request.form["feature_generator"]
         vocoder = request.form["vocoder"]
 
-        response = run(language, input_text, feature_generator, vocoder)
+        if feature_generator not in model_name:
+            return jsonify({'message': "Only TACOTRON, FASTSPEECH2 are supported on feature_generator"}), 400
 
-        if response.status_code != 200:
-            print(response.status_code)
+        if vocoder not in model_name:
+            return jsonify({'message': 'Only MB_MELGAN are supported on vocoder'}), 400
 
-            if response.status_code == 429:
-                return jsonify({'error': 'Too much request'}), 429
-            elif response.status_code == 500:
-                return jsonify({'error': 'Generate TTS error! input text is too long'}), 500
+        if requests_queue.qsize() >= 1:
+            return jsonify({'message': 'Too Many Requests'}), 429
 
-        result = response.content
+        req = {
+            'input': [input_text, feature_generator, vocoder]
+        }
 
-        byte_io = io.BytesIO(result)
-        byte_io.seek(0)
+        requests_queue.put(req)
 
-        return send_file(byte_io, mimetype="audio/wav")
+        while 'output' not in req:
+            time.sleep(CHECK_INTERVAL)
+
+        result = req['output']
+
+        if req['output'] == 400:
+            return jsonify({'error': 'Generate TTS error! input text is too long'}), 400
+
+        return send_file(result, mimetype="audio/wav")
 
     except Exception as e:
         print(e)
-        return "check your input data", 400
-
+        return "server error", 500
 
 @app.route('/health')
 def health():
@@ -72,7 +193,7 @@ def health():
 
 @app.route('/')
 def main():
-    return render_template('index.html')
+    return "TensorFlowTTS-kr"
 
 
 if __name__ == "__main__":
