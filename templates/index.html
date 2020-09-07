@@ -63,30 +63,38 @@
                 <h3>Notice</h3>
                 <ul>
                     <li>Support English, Korean, Chinese</li>
-                    <li><b>Less than 200 characters</b></li>
+                    <li><b>voice results are limited to 45 seconds.</b></li>
                 </ul>
                 <hr class="solid">
 
                 <!-- If your project have a input files -->
                 <h2>Testing TTS </h2>
                 <div id = "optionBox" style="margin-top: 5px; margin-bottom: 5px;">
-                    <label name="chooseLang"> Choose a language : </label>
-                    <label><input type="radio" name="language" value="english" checked/> English </label>
-                    <label><input type="radio" name="language" value="korean"/> Korean </label>
-                    <label><input type="radio" name="language" value="chinese"/> Chinese </label>
-
+                    <label name="chooseLanguage"> Choose a language : </label>
+                        <select name="language" id="language">
+                            <option name="english" value="english" > English</option>
+                            <option name="korean" value="korean"/> Korean </option>
+                            <option name="chinese" value="chinese"/> Chinese </option>
+                        </select>
                     <br>
                     <label name="chooseGenerator"> Choose a generator : </label>
-                    <label><input type="radio" name="generator" value="TACOTRON" checked/> Tacotron2 </label>
-                    <label><input type="radio" name="generator" value="FASTSPEECH2" /> Fastspeech2 </label>
-
+                        <select name="generator" id="generator">
+                            <option id="TACOTRON" value="TACOTRON"> Tacotron2</option>
+                            <option id="FASTSPEECH2" value="FASTSPEECH2"> Fastspeech2</option>
+                            <option id="Fastspeech" name="for_eng" value="FASTSPEECH"> Fastspeech</option>
+                        </select>
                     <br>
                     <label name="chooseVocoder"> Choose a vocoder : </label>
-                    <label><input type="radio" name="vocoder" value="MB-MELGAN" checked/> MB-MelGAN </label>
+                        <select name="vocoder" id="vocoder">
+                            <option id="MB-MELGAN" value="MB-MELGAN"> MB-MELGAN</option>
+                            <option id="MELGAN-STFT" name="for_eng" value="MELGAN-STFT"> MELGAN-STFT</option>
+                            <option id="MELGAN" name="for_eng" value="MELGAN"> MelGAN</option>
+                        </select>
                 </div>
-                <div id = 'inputBox'>
+                <div id = 'inputBox' style="margin-left: auto; margin-right: auto;">
                     <label name="inputText">Input Text: </label>
-                    <input type='text' id ='input_text' style="margin-right: 10px; margin-bottom: 10px;">
+                    <br>
+                    <textarea id="input_text" rows="4" cols="50" style= "max-width:100%; max-height:100%; margin-right: auto; margin-bottom: 10px;"></textarea>
                     <br>
                     <button id = "submit" type='submit' class="btn btn-primary btn-lg" style="margin-left: auto;"> submit </button>
                 </div>
@@ -144,6 +152,15 @@
 
                 <!-- onclick function, you can delete this if you want  -->
                 <script>
+                    document.getElementById('language').onchange = () => {
+                        const lang = document.getElementById('language').value;
+                        if (lang !== 'english'){
+                            document.querySelector('[name="for_eng"]').disabled = true;
+                        } else {
+                            document.querySelector('[name="for_eng"]').disabled = false;
+                        }
+                    }
+
                     window.location.origin = "localhost"
                     document.getElementById("submit").onclick = () => {
                         document.getElementById("submit").disabled = true;
@@ -158,9 +175,9 @@
 
                         const formData = new FormData();
 
-                        const language = document.querySelector('input[name=language]:checked').value
-                        const generator = document.querySelector('input[name=generator]:checked').value
-                        const vocoder = document.querySelector('input[name=vocoder]:checked').value
+                        const language = document.getElementById("language").value
+                        const generator = document.getElementById("generator").value
+                        const vocoder = document.getElementById("vocoder").value
                         const input_text = document.getElementById("input_text").value
 
 
@@ -181,7 +198,7 @@
                                 return response
                             }
                             else{
-                                throw Error((await response.clone().json()).message)
+                                throw Error((await response.clone().json()).error)
                             }
                         })
                         .then(response => response.blob())
@@ -213,6 +230,7 @@
                         var spining = document.getElementById("loader");
                         spining.style.display = "none";
                     }
+
 
                 </script>
             </div>
