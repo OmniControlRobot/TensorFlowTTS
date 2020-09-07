@@ -1,6 +1,7 @@
 import requests
 import io
 import json
+from ast import literal_eval
 
 from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
@@ -46,12 +47,10 @@ def predict():
         response = run(language, input_text, feature_generator, vocoder)
 
         if response.status_code != 200:
-            print(response.status_code)
 
-            if response.status_code == 429:
-                return jsonify({'error': 'Too much request'}), 429
-            elif response.status_code == 500:
-                return jsonify({'error': 'Generate TTS error! input text is too long'}), 500
+            content = literal_eval(response.content.decode('utf8'))
+
+            return content, response.status_code
 
         result = response.content
 
@@ -62,7 +61,7 @@ def predict():
 
     except Exception as e:
         print(e)
-        return "check your input data", 400
+        return jsonify({"error": "server error."}), 500
 
 
 @app.route('/health')
