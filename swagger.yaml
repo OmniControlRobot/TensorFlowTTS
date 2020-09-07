@@ -35,7 +35,7 @@ paths:
                   enum: [TACOTRON, FASTSPEECH2]
                 vocoder:
                   type: string
-                  eunm: [MB-MELGAN]
+                  enum: [MB-MELGAN]
                 input_text:
                   type: string
 

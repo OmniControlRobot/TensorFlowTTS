@@ -158,13 +158,13 @@ def predict():
         vocoder = request.form["vocoder"]
 
         if feature_generator not in model_name:
-            return jsonify({'message': "Only TACOTRON, FASTSPEECH2 are supported on feature_generator"}), 400
+            return jsonify({"error": "Only TACOTRON, FASTSPEECH2 are supported on feature_generator"}), 400
 
         if vocoder not in model_name:
-            return jsonify({'message': 'Only MB_MELGAN are supported on vocoder'}), 400
+            return jsonify({"error": "Only MB_MELGAN are supported on vocoder"}), 400
 
         if requests_queue.qsize() >= 1:
-            return jsonify({'message': 'Too Many Requests'}), 429
+            return jsonify({"error": "Too Many Requests"}), 429
 
         req = {
             'input': [input_text, feature_generator, vocoder]
@@ -178,13 +178,13 @@ def predict():
         result = req['output']
 
         if req['output'] == 400:
-            return jsonify({'error': 'Generate TTS error! input text is too long'}), 400
+            return jsonify({"error": "Generate TTS error! input text is too long"}), 400
 
         return send_file(result, mimetype="audio/wav")
 
     except Exception as e:
         print(e)
-        return "server error", 500
+        return jsonify({"error": "TensorFlowTTS-korean server error"}), 500
 
 @app.route('/health')
 def health():
