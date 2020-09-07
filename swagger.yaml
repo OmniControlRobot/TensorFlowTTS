@@ -35,10 +35,9 @@ paths:
                   enum: [TACOTRON, FASTSPEECH, FASTSPEECH2]
                 vocoder:
                   type: string
-                  eunm: [MELGAN, MELGAN-STFT, MB-MELGAN]
+                  enum: [MB-MELGAN, MELGAN-STFT, MELGAN]
                 input_text:
                   type: string
-
       responses:
         '200':
           description: success
