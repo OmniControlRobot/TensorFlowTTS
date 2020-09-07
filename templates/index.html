@@ -81,14 +81,14 @@
                         <select name="generator" id="generator">
                             <option id="TACOTRON" value="TACOTRON"> Tacotron2</option>
                             <option id="FASTSPEECH2" value="FASTSPEECH2"> Fastspeech2</option>
-                            <option id="Fastspeech" name="for_eng" value="FASTSPEECH"> Fastspeech</option>
+                            <option id="FASTSPEECH" value="FASTSPEECH"> Fastspeech</option>
                         </select>
                     <br>
                     <label name="chooseVocoder"> Choose a vocoder : </label>
                         <select name="vocoder" id="vocoder">
                             <option id="MB-MELGAN" value="MB-MELGAN"> MB-MELGAN</option>
-                            <option id="MELGAN-STFT" name="for_eng" value="MELGAN-STFT"> MELGAN-STFT</option>
-                            <option id="MELGAN" name="for_eng" value="MELGAN"> MelGAN</option>
+                            <option id="MELGAN-STFT" value="MELGAN-STFT"> MELGAN-STFT</option>
+                            <option id="MELGAN" value="MELGAN"> MelGAN</option>
                         </select>
                 </div>
                 <div id = 'inputBox' style="margin-left: auto; margin-right: auto;">
@@ -155,9 +155,16 @@
                     document.getElementById('language').onchange = () => {
                         const lang = document.getElementById('language').value;
                         if (lang !== 'english'){
-                            document.querySelector('[name="for_eng"]').disabled = true;
+                            document.getElementById("FASTSPEECH").disabled = true;
+                            document.getElementById("MELGAN-STFT").disabled = true;
+                            document.getElementById("MELGAN").disabled = true;
+
+                            document.getElementById("generator").value = "TACOTRON"
+                            document.getElementById("vocoder").value = "MB-MELGAN"
                         } else {
-                            document.querySelector('[name="for_eng"]').disabled = false;
+                            document.getElementById("FASTSPEECH").disabled = false;
+                            document.getElementById("MELGAN-STFT").disabled = false;
+                            document.getElementById("MELGAN").disabled = false;
                         }
                     }
 
