@@ -1,9 +1,9 @@
 openapi: 3.0.1
 
 info:
-  title: ainize-tensorflowtts-eng-swagger
+  title: ainize-tensorflowtts-chinese-swagger
   description: |
-    Convert text into a speech
+    Convert chinese text into a speech
     ---
       How to use:
       * Select feature_generator and vocoder
@@ -13,18 +13,18 @@ info:
     name: Ainizer - Sangil Park
   version: "0.1"
   license:
-    name: "Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)"
-    url: https://github.com/psi1104/White-box-Cartoonization#license
+    name: "Apache License Version 2.0"
+    url: https://github.com/psi1104/TensorFlowTTS/blob/tts-chinese/LICENSE
 
 servers:
-  - url: https://master-tensor-flow-tts-en-psi1104.endpoint.ainize.ai/
+  - url: https://tts-chinese-tensor-flow-tts-psi1104.endpoint.ainize.ai/
 
 paths:
   /predict:
     post:
       requestBody:
         required: true
-        description: "Convert text into a speech"
+        description: "Convert chinese text into a speech"
         content:
           multipart/form-data:
             schema:
@@ -32,10 +32,10 @@ paths:
               properties:
                 feature_generator:
                   type: string
-                  enum: [TACOTRON, FASTSPEECH, FASTSPEECH2]
+                  enum: [TACOTRON, FASTSPEECH2]
                 vocoder:
                   type: string
-                  eunm: [MELGAN, MELGAN-STFT, MB-MELGAN]
+                  enum: [MB-MELGAN]
                 input_text:
                   type: string
 
