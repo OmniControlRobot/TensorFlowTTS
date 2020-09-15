@@ -53,7 +53,8 @@
         <div class = "container">
             <div class="jumbotron mt-3">
                  <!-- Proejct Title -->
-                <h1>TTS-Ainize - Text2Speech</h1>
+                <h1>TensorFlowTTS - Text To Speech </h1>
+                <h4>Real-Time State-of-the-art Speech Synthesis architectures based-on TensorFlow2</h4>
                 <!-- Github link and Ainize link -->
                 <A>GitHub repository : </A> <A href="https://github.com/psi1104/TensorFlowTTS/tree/server" target="blank">TensorFlowTTS repo</A>
                 <br>
@@ -77,14 +78,29 @@
                             <option name="chinese" value="chinese"/> Chinese </option>
                         </select>
                     <br>
-                    <label name="chooseGenerator"> Choose a generator : </label>
+                    <table style="margin-top: 10px">
+                        <thead>
+                            <tr>
+                                <th style="text-align: center">Tacotron-2 + Multi-band MelGAN</th>
+                                <th style="text-align: center">FastSpeech-2 + Multi-band MelGAN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="sample">
+                                <td style="text-align: center"><audio src="https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/english/eng_taco_mb-mel.wav" controls="" preload=""></audio></td>
+                                <td style="text-align: center"><audio src="https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/english/eng_fast2_mb-mel.wav" controls="" preload=""></audio></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br>
+                    <label nae="chooseGenerator"> Choose a generator : </label>
                         <select name="generator" id="generator">
                             <option id="TACOTRON" value="TACOTRON"> Tacotron2</option>
                             <option id="FASTSPEECH2" value="FASTSPEECH2"> Fastspeech2</option>
                             <option id="FASTSPEECH" value="FASTSPEECH"> Fastspeech</option>
                         </select>
                     <br>
-                    <label name="chooseVocoder"> Choose a vocoder : </label>
+                    <label namme="chooseVocoder"> Choose a vocoder : </label>
                         <select name="vocoder" id="vocoder">
                             <option id="MB-MELGAN" value="MB-MELGAN"> MB-MELGAN</option>
                             <option id="MELGAN-STFT" value="MELGAN-STFT"> MELGAN-STFT</option>
@@ -98,7 +114,8 @@
                     <br>
                     <button id = "submit" type='submit' class="btn btn-primary btn-lg" style="margin-left: auto;"> submit </button>
                 </div>
-
+                <hr class="solid">
+                <h2>Result </h2>
                 <!-- Result Box -->
                 <div id ='resultBox' style="margin-left: auto; margin-right: auto;">
                     <p id='errorbox'></p>
@@ -110,6 +127,8 @@
                         <source id = "result" src=""></source>
                     </audio>
                 </div>
+
+
 
                 <div id="badge" OnClick="location.href='https://join.slack.com/t/ainetwork-dev/shared_invite/zt-c89mb8z9-IqaCsNmsNLXKNylKXrJTTg'"
                     style="position: fixed; bottom: 40px; right: 40px; filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.25)); cursor:pointer;">
@@ -152,8 +171,23 @@
 
                 <!-- onclick function, you can delete this if you want  -->
                 <script>
+                    const sample_files = {
+                        'english': [
+                            'https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/english/eng_taco_mb-mel.wav',
+                            'https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/english/eng_fast2_mb-mel.wav'
+                        ],
+                        'korean': [
+                            'https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/korean/kor_taco_mb-mel.wav',
+                            'https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/korean/kor_fast2_mb-mel.wav'
+                        ],
+                        'chinese': [
+                            'https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/chinese/ch_taco_mb-mel.wav',
+                            'https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/chinese/ch_fast2_mb-mel.wav'
+                        ]
+                    }
                     document.getElementById('language').onchange = () => {
                         const lang = document.getElementById('language').value;
+
                         if (lang !== 'english'){
                             document.getElementById("FASTSPEECH").disabled = true;
                             document.getElementById("MELGAN-STFT").disabled = true;
@@ -166,6 +200,14 @@
                             document.getElementById("MELGAN-STFT").disabled = false;
                             document.getElementById("MELGAN").disabled = false;
                         }
+
+                        samples = ``;
+
+                        for (var i = 0; i < sample_files[lang].length; i++) {
+                            samples += `<td style="text-align: center"><audio src=${sample_files[lang][i]} controls="" preload=""><\/audio><\/td>`
+                        }
+                        document.getElementById('sample').innerHTML = samples
+
                     }
 
                     window.location.origin = "localhost"
