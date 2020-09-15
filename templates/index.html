@@ -47,6 +47,7 @@
                 display: inline-block;
                 text-align: center;
             }
+            th, td {padding: 10px;}
         </style>
     </head>
     <body>
@@ -81,12 +82,20 @@
                         <thead>
                             <tr>
                                 <th style="text-align: center">Tacotron-2 + Multi-band MelGAN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="sample1">
+                                <td style="text-align: center;"><audio src="https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/english/eng_taco_mb-mel.wav" controls="" preload=""></audio></td>
+                            </tr>
+                        </tbody>
+                        <thead>
+                            <tr>
                                 <th style="text-align: center">FastSpeech-2 + Multi-band MelGAN</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr id="sample">
-                                <td style="text-align: center"><audio src="https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/english/eng_taco_mb-mel.wav" controls="" preload=""></audio></td>
+                            <tr id="sample2">
                                 <td style="text-align: center"><audio src="https://raw.githubusercontent.com/psi1104/TensorFlowTTS/server/static/sample/english/eng_fast2_mb-mel.wav" controls="" preload=""></audio></td>
                             </tr>
                         </tbody>
@@ -122,7 +131,7 @@
                         <div id = "statusWraaper"><p id='statusBox'></p></div>
                         <div id = "loader" style="display: none;"></div><br>
                     </div>
-                    <audio id = "audioBox" controls="controls">
+                    <audio id = "audioBox" controls="controls" style="margin-bottom: 80px;">
                         <source id = "result" src=""></source>
                     </audio>
                 </div>
@@ -200,12 +209,8 @@
                             document.getElementById("MELGAN").disabled = false;
                         }
 
-                        samples = ``;
-
-                        for (var i = 0; i < sample_files[lang].length; i++) {
-                            samples += `<td style="text-align: center"><audio src=${sample_files[lang][i]} controls="" preload=""><\/audio><\/td>`
-                        }
-                        document.getElementById('sample').innerHTML = samples
+                        document.getElementById('sample1').innerHTML = `<td style="text-align: center"><audio src=${sample_files[lang][0]} controls="" preload=""><\/audio><\/td>`
+                        document.getElementById('sample2').innerHTML = `<td style="text-align: center"><audio src=${sample_files[lang][1]} controls="" preload=""><\/audio><\/td>`
 
                     }
 
