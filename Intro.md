@@ -1,9 +1,5 @@
 # TensorFlow TTS
 
-<h2 align="center">
-<p>Real-Time State-of-the-art Speech Synthesis for Tensorflow 2
-</h2>
-
 TensorFlowTTS provides real-time state-of-the-art speech synthesis architectures such as Tacotron-2, Melgan, Multiband-Melgan, FastSpeech, FastSpeech2 based-on TensorFlow 2. 
 
 It supports English, Korean, and Chinese.
@@ -24,7 +20,7 @@ It supports English, Korean, and Chinese.
 | Korean  |     O     |      O      |      X     |     O     |      X      |    X   |
 | Chinese |     O     |      O      |      X     |     O     |      X      |    X   |
 
-##Curl Example
+## Curl Example
 - language: English, Korean, Chinese
 
 - feature_generator: Tacotron2, FASTSPEECH2, FASTSPEECH
