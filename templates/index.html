@@ -59,7 +59,6 @@
                 <!-- Github link and Ainize link -->
                 <A>GitHub repository : </A> <A href="https://github.com/psi1104/TensorFlowTTS/tree/server" target="blank">TensorFlowTTS repo</A>
                 <br>
-                <A>OPEN API : </A> <A href="https://ainize.ai/psi1104/TensorFlowTTS?branch=server" target="blank"> on Ainize </A><br>
                 <hr class="solid">
                 <h3>Notice</h3>
                 <ul>
@@ -103,7 +102,7 @@
                     <br>
                     <label nae="chooseGenerator"> Choose a generator : </label>
                         <select name="generator" id="generator">
-                            <option id="TACOTRON" value="TACOTRON"> Tacotron2</option>
+                            <option id="TACOTRON" value="TACOTRON2"> Tacotron2</option>
                             <option id="FASTSPEECH2" value="FASTSPEECH2"> Fastspeech2</option>
                             <option id="FASTSPEECH" value="FASTSPEECH"> Fastspeech</option>
                         </select>
@@ -201,7 +200,7 @@
                             document.getElementById("MELGAN-STFT").disabled = true;
                             document.getElementById("MELGAN").disabled = true;
 
-                            document.getElementById("generator").value = "TACOTRON"
+                            document.getElementById("generator").value = "TACOTRON2"
                             document.getElementById("vocoder").value = "MB-MELGAN"
                         } else {
                             document.getElementById("FASTSPEECH").disabled = false;

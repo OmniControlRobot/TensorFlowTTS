@@ -42,6 +42,10 @@ def predict():
         language = request.form["language"]
         input_text = request.form["input_text"]
         feature_generator = request.form["feature_generator"]
+
+        if feature_generator == 'TACOTRON2':
+            feature_generator = 'TACOTRON'
+
         vocoder = request.form["vocoder"]
 
         response = run(language, input_text, feature_generator, vocoder)
