@@ -21,9 +21,9 @@ It supports English, Korean, and Chinese.
 | Chinese |     O     |      O      |      X     |     O     |      X      |    X   |
 
 ## Curl Example
-- language: English, Korean, Chinese
+- language: english, korean, chinese
 
-- feature_generator: Tacotron2, FASTSPEECH2, FASTSPEECH
+- feature_generator: TACOTRON2, FASTSPEECH2, FASTSPEECH
 
 - vocoder: MB-MELGAN, MELGAN-STFT, MELGAN
 
